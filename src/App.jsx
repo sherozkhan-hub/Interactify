@@ -18,7 +18,7 @@ import { useSelector } from "react-redux";
 
 function Layout() {
   const { user } = useSelector((state) => state.user);
-  console.log(user);
+  // console.log(user);
   const location = useLocation();
   return user?.token ? (
     <Outlet />
@@ -29,7 +29,7 @@ function Layout() {
 
 function App() {
   const { theme } = useSelector((state) => state.theme);
-  console.log(theme);
+  // console.log(theme);
   return (
     <BrowserRouter>
       <div data-theme={theme} className="w-full min-h-[100vh]">

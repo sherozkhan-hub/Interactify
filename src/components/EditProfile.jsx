@@ -3,6 +3,9 @@ import { useForm } from "react-hook-form";
 import { MdClose } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import TextInput from "./TextInput";
+import CustomButton from "./CustomButton";
+import Loading from "./Loading";
+import { UpdateProfile } from "../redux/userSlice";
 
 const EditProfile = () => {
   const { user } = useSelector((state) => state.user);
@@ -23,7 +26,13 @@ const EditProfile = () => {
 
   const onSubmit = async (data) => {};
 
-  const handleClose = () => {};
+  const handleClose = () => {
+    dispatch(UpdateProfile(false));
+  };
+
+  const handleSelect = (e) => {
+    setPicture(e.target.files[0]);
+  };
 
   return (
     <>
@@ -53,7 +62,7 @@ const EditProfile = () => {
             </div>
 
             <form
-              className="px-4 sm:px- flex flex-col gap-3 2xl:gap-6"
+              className="px-4 sm:px- flex flex-col gap-3 2xl:gap-6 bg-ascent-1"
               onSubmit={handleSubmit(onSubmit)}
             >
               <TextInput
@@ -83,6 +92,46 @@ const EditProfile = () => {
                 })}
                 error={errors?.description ? errors?.description.message : ""}
               />
+              <label
+                htmlFor="file"
+                className="flex items-center gap-2 text-ascent-2 hover:text-ascent-1 cursor-pointer"
+              >
+                <input
+                  type="file"
+                  onChange={(e) => handleSelect(e)}
+                  id="imgUpload"
+                  data-max-size="5120"
+                  accept=".jpg .png .jpeg"
+                  className="hidden"
+                />
+                No file Chosen
+              </label>
+
+              {errMsg?.message && (
+                <span
+                  role="alert"
+                  className={`text-sm ${
+                    errMsg?.status === "failed"
+                      ? "text-red-500"
+                      : "text-green-500"
+                  } mt-0.5`}
+                >
+                  {errMsg?.message}
+                </span>
+              )}
+
+              <div className="py- sm:flex sm:flex-row-reverse border-t border-[#66666645]">
+                {isSubmitting ? (
+                  <Loading />
+                ) : (
+                  <CustomButton
+                    type={"submit"}
+                    containerStyles="inline-flex justify-center rounded-md 
+                  bg-blue px-8 py-3 text-sm font-medium text-white outline-none"
+                    title="Submit"
+                  />
+                )}
+              </div>
             </form>
           </div>
         </div>

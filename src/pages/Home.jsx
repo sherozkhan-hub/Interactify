@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import EditProfile from "../components/EditProfile";
 
 const Home = () => {
-  const { user } = useSelector((state) => state.user);
+  const { user, edit } = useSelector((state) => state.user);
   const [friendRequest, setFriendRequest] = useState(friends);
   const [suggestedFriend, setSuggestedFriend] = useState(suggest);
   const { register, handleSubmit, errors } = useForm();
@@ -267,7 +267,7 @@ h-screen overflow-hidden"
         </div>
       </div>
 
-      <EditProfile />
+      {edit && <EditProfile />}
     </>
   );
 };
