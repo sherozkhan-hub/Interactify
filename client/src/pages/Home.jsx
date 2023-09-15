@@ -5,7 +5,7 @@ import FriendsCard from "../components/FriendsCard";
 import Loading from "../components/Loading";
 import PostCard from "../components/PostCard";
 import { requests, friends, posts } from "../assets/data.js";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Link } from "react-router-dom";
 import { suggest } from "../assets/data.js";
 import NoProfile from "../assets/userprofile.png";
@@ -18,24 +18,55 @@ import EditProfile from "../components/EditProfile";
 
 const Home = () => {
   const { user, edit } = useSelector((state) => state.user);
-  const [friendRequest, setFriendRequest] = useState(friends);
+  const [friendRequest, setFriendRequest] = useState(requests);
   const [suggestedFriend, setSuggestedFriend] = useState(suggest);
-  const { register, handleSubmit, errors } = useForm();
+  const { register, handleSubmit, formState } = useForm();
+  const { errors } = formState;
   const [errMsg, setErrMsg] = useState("");
+  const [postss, setPostss] = useState(posts);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
+  const id = useId();
 
   const handlePostSubmit = (data) => {
-    console.log(data);
+    const newData = {
+      _id: "64e2fe620d7868ecff1a",
+      userId: {
+        _id: "64df39704180b81adfe41d0b",
+        firstName: "Chris",
+        lastName: "Omar",
+        profileUrl:
+          "https://res.cloudinary.com/djs3wu5bg/image/upload/v1683874454/samples/people/boy-snow-hoodie.jpg",
+        location: "New York, USA",
+      },
+      ...data,
+      image:
+        "https://res.cloudinary.com/djs3wu5bg/image/upload/v1692597858/SOCIALMEDIA/hdahstpztt1fvobc13st.png",
+      likes: ["64df3c064180b81adfe41d4b"],
+      comments: [],
+      createdAt: "2023-08-21T06:04:18.297Z",
+      updatedAt: "2023-08-21T06:04:18.297Z",
+      __v: 0,
+    };
+    setPostss([newData, ...postss]);
   };
+
+  const deletePost = (id) => {
+    const newPosts = postss.filter((post) => post._id !== id);
+    setPostss(newPosts);
+  };
+  // const onError = (errors, e) => {
+  //   console.log(errors.description.message);
+  // };
   // console.log(friends);
+
   return (
     <>
       <div
         className="home w-full px-0 lg:px-10 
-pb-20 2xl:px-40 bg-bgColor lg:rounded-lg 
-h-screen overflow-hidden"
+                    pb-20 2xl:px-40 bg-bgColor lg:rounded-lg 
+                    h-screen overflow-hidden"
       >
         <TopBar />
 
@@ -71,10 +102,10 @@ h-screen overflow-hidden"
                   register={register("description", {
                     required: "Write Something about post",
                   })}
-                  error={errors?.description ? errors?.description.message : ""}
+                  error={errors?.description?.message}
                 />
               </div>
-              {errMsg?.message && (
+              {/* {errMsg?.message && (
                 <span
                   role="alert"
                   className={`text-sm ${
@@ -83,9 +114,9 @@ h-screen overflow-hidden"
                       : "text-green-500"
                   } mt-0.5`}
                 >
-                  {errMsg?.message}
+                  {errMsg?.message}hbjhbhj
                 </span>
-              )}
+              )} */}
 
               <div className="w-full flex items-center justify-between py-2">
                 <label
@@ -95,9 +126,9 @@ h-screen overflow-hidden"
                   <input
                     type="file"
                     onChange={(e) => setFile(e.target.files[0])}
-                    id="imgUpload"
+                    id="videoUpload"
                     data-max-size="5120"
-                    accept=".jpg .png .jpeg"
+                    accept=".mp4 .wav"
                     className="hidden"
                   />
                   <BiImages />
@@ -143,6 +174,7 @@ h-screen overflow-hidden"
                     <CustomButton
                       type="submit"
                       title="Post"
+                      // onClick={handlePostSubmit}
                       containerStyles="bg-[#0444a4] text-white rounded-full font-semibold 
                   text-sm py-1 px-6"
                     />
@@ -153,13 +185,13 @@ h-screen overflow-hidden"
 
             {loading ? (
               <Loading />
-            ) : posts?.length > 0 ? (
-              posts?.map((post) => (
+            ) : postss?.length > 0 ? (
+              postss?.map((post) => (
                 <PostCard
                   key={post._id}
                   user={user}
                   post={post}
-                  deletePost={() => {}}
+                  deletePost={deletePost}
                   likePost={() => {}}
                 />
               ))
@@ -182,6 +214,7 @@ h-screen overflow-hidden"
               </div>
             </div>
 
+            {/* {/ FRIEND REQUEST */}
             <div className="w-full flex flex-col gap-4 pt-4">
               {friendRequest?.map((from) => (
                 <div
@@ -193,16 +226,17 @@ h-screen overflow-hidden"
                     className="w-full flex gap-4 items-center cursor-pointer"
                   >
                     <img
-                      src={from?.profileUrl || NoProfile} // Use the profileUrl or NoProfile if not available
-                      alt={from?.firstName}
+                      src={from?.requestFrom.profileUrl || NoProfile}
+                      alt={from?.requestFrom.firstName}
                       className="w-10 h-10 object-cover rounded-full"
                     />
                     <div className="flex-1">
                       <p className="text-base font-medium text-ascent-1">
-                        {from?.firstName} {from?.lastName}
+                        {from?.requestFrom.firstName}{" "}
+                        {from?.requestFrom.lastName}
                       </p>
                       <span className="text-sm text-ascent-2">
-                        {from?.profession ?? "No Profession"}
+                        {from?.requestFrom.profession ?? "No Profession"}
                       </span>
                     </div>
                   </Link>
@@ -224,7 +258,7 @@ h-screen overflow-hidden"
             </div>
 
             {/* {/ SUGGESTED FRIENDS */}
-            <div className="w-full bg-primary shadow-sm rounded-lg px-5 ру-5">
+            <div className="w-full bg-primary shadow-sm rounded-lg px-5 py-5">
               <div className="flex items-center justify-between text-lg text-ascent-1 border-b border-[#66666645]">
                 <span>Friend Suggestion</span>
               </div>
@@ -245,6 +279,14 @@ h-screen overflow-hidden"
                           alt=""
                           className="w-10 h-10 rounded-full object-cover"
                         />
+                        <div className="flex-1">
+                          <p className="text-base font-medium text-ascent-1">
+                            {friend.firstName} {friend.lastName}
+                          </p>
+                          <span className="text-sm text-ascent-2">
+                            {friend.profession ?? "No Profession"}
+                          </span>
+                        </div>
                       </Link>
 
                       <div className="flex gap-1">

@@ -6,20 +6,20 @@ import Loading from "./Loading";
 import CustomButton from "./CustomButton";
 import NoProfile from "../assets/userprofile.png";
 
-const CommentForm = ({ user, id, replyAt, getComments }) => {
+const CommentForm = ({ user, replyAt, getComments }) => {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
-
+  console.log({ replyAt });
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
   } = useForm({
     mode: "onChange",
   });
 
   const onSubmit = async (data) => {};
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -31,13 +31,16 @@ const CommentForm = ({ user, id, replyAt, getComments }) => {
           className="w-10 h-10 rounded-full object-cover"
         />
         <TextInput
-          name="comment"
           styles="w-full rounded-full py-3"
-          placeholder={replyAt ? `Reply @${replyAt}` : "Comment this post"}
+          placeholder={
+            replyAt
+              ? `Reply @${replyAt.firstName + " " + replyAt.lastName}`
+              : "Comment this post"
+          }
           register={register("comment", {
             required: "Comment cannot be empty",
           })}
-          error={errors?.comment ? errors?.comment.message : ""}
+          error={errors?.comment?.message}
         />
         {errMsg?.message && (
           <span
