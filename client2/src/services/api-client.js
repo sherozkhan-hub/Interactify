@@ -7,7 +7,7 @@ export const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    //const user = useSelector((state) => state.user); // Wrap this in a hook
+    // const { user } = useSelector((state) => state.user); // Wrap this in a hook
     const user = JSON.parse(localStorage.getItem("user"));
 
     if (user.token) {

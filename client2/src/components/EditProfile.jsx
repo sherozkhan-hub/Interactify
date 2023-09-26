@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { MdClose } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import TextInput from "./TextInput";
 import CustomButton from "./CustomButton";
 import Loading from "./Loading";
-import { UpdateProfile } from "../redux/userSlice";
+import { UpdateProfile, Userlogin } from "../redux/userSlice";
+import { handleFileUpload } from "../utils";
+import { axiosInstance } from "../services/api-client";
 
 const EditProfile = () => {
   const { user } = useSelector((state) => state.user);
@@ -24,14 +26,40 @@ const EditProfile = () => {
     defaultValues: { ...user },
   });
 
-  const onSubmit = async (data) => {};
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
+
+    try {
+      const uri = picture && (await handleFileUpload(picture));
+
+      const { firstName, lastName, location, profession } = data;
+
+      const res = axiosInstance.put(`users/update-user/${user._id}`, {
+        firstName,
+        lastName,
+        location,
+        profession,
+        picture: uri ? uri : user.picture,
+      });
+
+      if (res) {
+        const newUser = { token: res.token, ...res.user };
+
+        dispatch(Userlogin(newUser));
+
+        setTimeout(() => {
+          dispatch(UpdateProfile(false));
+        }, 3000);
+      }
+
+      setIsSubmitting(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleClose = () => {
     dispatch(UpdateProfile(false));
-  };
-
-  const handleSelect = (e) => {
-    setPicture(e.target.files[0]);
   };
 
   return (
@@ -98,7 +126,7 @@ const EditProfile = () => {
               >
                 <input
                   type="file"
-                  onChange={(e) => handleSelect(e)}
+                  onChange={(e) => setPicture(e.target.files[0])}
                   id="imgUpload"
                   data-max-size="5120"
                   accept=".jpg .png .jpeg"

@@ -11,6 +11,7 @@ import moment from "moment/moment";
 
 const ProfileCard = ({ user }) => {
   const { user: data, edit } = useSelector((state) => state.user);
+  // console.log(data, "data");
   const dispatch = useDispatch();
   return (
     <div>
@@ -22,14 +23,20 @@ const ProfileCard = ({ user }) => {
           className="w-full flex flex-col items-center 
         justify-between border-b pb-5 border-[#66666645]"
         >
-          <Link to={"/profile/" + user?._id} className="flex gap-2">
+          <Link to={"/profile/" + data.userFound._id} className="flex gap-2">
             <img
-              src={user?.profileUrl ? user.profileUrl : NoProfile}
+              src={
+                user.userFound.profileUrl
+                  ? user.userFound.profileUrl
+                  : NoProfile
+              }
               alt={user?.email}
               className="rounded-full w-16 h-16 object-cover"
             />
           </Link>
-
+          <div className="text-ascent-1">
+            {data.userFound.firstName} {data.userFound.lastName}
+          </div>
           <div>
             {user?._id === data?._id ? (
               <LiaEditSolid
@@ -47,14 +54,12 @@ const ProfileCard = ({ user }) => {
               </button>
             )}
           </div>
-
           <div className="w-full flex flex-col gap-2 py-4 border-b border-[#66666645] ">
             <div className="flex gap-2 items-center text-ascent-2">
               <CiLocationOn className="text-xl text-ascent-1" />
               <span>{user?.profession ?? "Add Profession"}</span>
             </div>
           </div>
-
           <div className="w-full flex flex-col gap-2 py-4 border-b border-[#66666645] ">
             <p className="text-ascent-2 text-sm">
               {user?.friends?.length} Friends
@@ -78,7 +83,6 @@ const ProfileCard = ({ user }) => {
               </span>
             </div>
           </div>
-
           <div className="flex justify-start space-x-4 flex-row h-full items-center pt-4">
             <div className="bg-bgColor p-3 rounded-lg shadow-md w-1/4 flex justify-center items-center">
               <BsFacebook className="text-[#595b64] text-2xl" />{" "}

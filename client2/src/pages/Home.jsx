@@ -25,29 +25,42 @@ import {
   setPosts,
   setValue,
 } from "../redux/postSlice";
-import { handleFileUpload } from "../utils";
+import { handleFileUpload } from "../utils/index.js";
 
 const Home = () => {
   const { user, edit } = useSelector((state) => state.user);
+
   const [friendRequest, setFriendRequest] = useState(requests);
   const [suggestedFriend, setSuggestedFriend] = useState(suggest);
-  const { register, handleSubmit, formState } = useForm();
-  const { errors } = formState;
   const [errMsg, setErrMsg] = useState("");
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState("");
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
+  const userHome = user.userFound;
+  // redux
   const dispatch = useDispatch();
   const { acceptButton, posts } = useSelector((state) => state.posts);
+  // console.log(posts, "homeposts");
+
+  // console.log(Array.isArray(posts), "posts check");
+  // react-hook-form
+  const { register, handleSubmit, formState } = useForm();
+  const { errors } = formState;
 
   const fetchPost = async () => {
-    const res = await axiosInstance.get("/posts");
-    dispatch(setPosts(res.data.data));
-    console.log(res.data.data, "Posts fetch");
+    const { data } = await axiosInstance.get("/posts");
+    // console.log("resHowm", res);
+    dispatch(setPosts(data.data));
+    // console.log(res.data.data, "Posts fetch");
   };
 
   useEffect(() => {
-    // setLoading(true);
+    // const fetchPost = async () => {
+    //   const res = await axiosInstance.get("/posts");
+    //   dispatch(setPosts(res.data.data));
+    //   console.log(res.data.data, "Posts fetch");
+    //   console.log(posts, "Posts");
+    // };
     // getUser();
     fetchPost();
     // fetchFriendRequest();
@@ -56,23 +69,25 @@ const Home = () => {
   }, []);
 
   const handlePostSubmit = async (data) => {
+    setPosting(true);
     try {
-      console.log("Worrr");
-      setPosting(true);
       const uri = file && (await handleFileUpload(file));
-
+      // console.log(uri, "URI");
+      console.log("filehowm", file);
       const newData = uri ? { ...data, image: uri } : data;
 
-      const res = await axios.post("/posts/create-post", newData);
+      const res = await axiosInstance.post("/posts/create-post", newData);
+      // console.log(res.data, "Post created");
       setPosting(false);
 
-      if (res.data.status === "failed") {
+      if (!res) {
         setErrMsg(res.data);
         return;
       }
 
       setFile(null);
       await fetchPost();
+      setPosting(false);
     } catch (error) {
       setPosting(false);
       console.log(error);
@@ -80,14 +95,18 @@ const Home = () => {
     // console.log(data.imageUpload[0].name)
   };
 
-  const deletePost = (id) => {
-    const newPosts = posts.filter((post) => post._id !== id);
-    // dispatch(setPosts(res.data));
+  const deletePost = async (id) => {
+    try {
+      console.log("HomePost id...", id);
+      const newPosts = posts.filter((post) => post._id !== id);
+      dispatch(setPosts(newPosts));
+      axiosInstance.delete(`/posts/${id}`).then((res) => {
+        console.log(res.data);
+      });
+    } catch (error) {
+      setErrMsg(error);
+    }
   };
-  // const onError = (errors, e) => {
-  //   console.log(errors.description.message);
-  // };
-  // console.log(friends);
 
   // const umarFunc = (id) => {
   //   const newarr = friendRequest.filter((fil) => fil._id === id);
@@ -97,7 +116,9 @@ const Home = () => {
   //   dispatch(setButtonValue(newarr[0]._id));
   // };
 
-  const handleLikePost = async (id) => {};
+  const handleLikePost = async (url) => {
+    await axiosInstance.post(url);
+  };
   const fetchFriendRequest = async () => {};
   const fetchSuggestedFriend = async () => {};
   const handleFriendRequest = async (id) => {};
@@ -124,10 +145,10 @@ const Home = () => {
             className="flex-1 h-full bg-primary px-4 flex flex-col 
       gap-6 overflow-y-auto border-r border-[#66666645]"
           >
-            {/* onSubmit={handleSubmit((data) => console.log(data.imageUpload[0].name))} */}
             <form
               onSubmit={handleSubmit((data) => handlePostSubmit(data))}
               className="px-4 rounded-lg bg-primary"
+              encType="multipart/form-data"
             >
               <div className="w-full flex items-center gap-2 py-4 border-b border-[#66666645]">
                 <img
@@ -145,34 +166,12 @@ const Home = () => {
                   error={errors?.description?.message}
                 />
               </div>
-              {/* {errMsg?.message && (
-                <span
-                  role="alert"
-                  className={`text-sm ${
-                    errMsg?.status === "failed"
-                      ? "text-red-500"
-                      : "text-green-500"
-                  } mt-0.5`}
-                >
-                  {errMsg?.message}hbjhbhj
-                </span>
-              )} */}
 
               <div className="flex items-center justify-between w-full py-2">
                 <label
                   htmlFor="imageUpload"
                   className="flex items-center gap-2 cursor-pointer text-ascent-2 hover:text-ascent-1"
                 >
-                  {/* <input
-                    type="file"
-                    onChange={(e) => setFile(e.target.files[0])}
-                    id="imageUpload"
-                    data-max-size="5120"
-                    accept=".mp4 .wav"
-                    className="hidden"
-
-                    {...register("imageUpload")}
-                  /> */}
                   <input
                     type="file"
                     onChange={(e) => setFile(e.target.files[0])}
@@ -185,7 +184,7 @@ const Home = () => {
                   <BiImages />
                   <span>Image</span>
                 </label>
-                <label
+                {/* <label
                   htmlFor="videoUpload"
                   className="flex items-center gap-2 cursor-pointer text-ascent-2 hover:text-ascent-1"
                 >
@@ -194,15 +193,14 @@ const Home = () => {
                     onChange={(e) => setFile(e.target.files[0])}
                     id="videoUpload"
                     data-max-size="5120"
-                    accept="*/*"
                     className="hidden"
                     {...register("videoUpload")}
                   />
                   <BiSolidVideo />
                   <span>Video</span>
-                </label>
+                </label> */}
 
-                <label
+                {/* <label
                   htmlFor="imageUpload"
                   className="flex items-center gap-2 cursor-pointer text-ascent-2 hover:text-ascent-1"
                 >
@@ -217,7 +215,7 @@ const Home = () => {
                   />
                   <BiImages />
                   <span>Gif</span>
-                </label>
+                </label> */}
                 <div>
                   {posting ? (
                     <Loading />
@@ -233,24 +231,37 @@ const Home = () => {
                 </div>
               </div>
             </form>
-            {loading ? (
-              <Loading />
-            ) : posts?.length > 0 ? (
-              posts?.map((post, index) => (
+            {/* {posts.length > 0 ? (
+              posts.map((post) => (
                 <PostCard
                   key={post._id}
                   user={user}
                   post={post}
                   deletePost={deletePost}
-                  likePost={() => {}}
+                  likePost={handleLikePost}
                 />
-                /* <p key={index}>{post._id}</p> */
               ))
             ) : (
               <div className="flex flex-col items-center justify-center w-full gap-4 py-10">
                 <p className="text-lg text-ascent-2">No Posts available</p>
               </div>
-            )}
+            )} */}
+            {posts &&
+              posts.map((post) => {
+                return (
+                  <>
+                    {/* <div> {post.description} </div> */}
+                    <PostCard
+                      key={post._id}
+                      user={userHome}
+                      post={post}
+                      deletePost={deletePost}
+                      likePost={handleLikePost}
+                    />
+                    ;
+                  </>
+                );
+              })}
           </div>
           {/* RIGHT */}
           <div className="flex-col hidden w-1/4 h-full gap-8 overflow-y-auto lg:flex">

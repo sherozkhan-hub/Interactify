@@ -7,11 +7,15 @@ import { MdOutlineDeleteOutline } from "react-icons/md";
 import moment from "moment";
 import CommentForm from "./CommentForm";
 import Loading from "./Loading";
-import { postComments } from "../assets/data";
 import ReplyCard from "./ReplyCard";
 import { set } from "react-hook-form";
+import { axiosInstance } from "../services/api-client";
+import ReplyForm from "./ReplyForm";
 
-const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
+const PostCard = ({ post, user, likePost, deletePost }) => {
+  // console.log("user PostCard", user);
+
+  // console.log("postPOstCaRD......", post);
   const [showAll, setShowAll] = useState(0);
   const [showReply, setShowReply] = useState(0);
   const [comments, setComments] = useState([]);
@@ -23,13 +27,14 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
   const [likecomment, setLikecomment] = useState(0);
 
   const getComments = async (postId) => {
+    setloading(true);
+    const { data } = await axiosInstance.get("/posts/comments/" + postId);
+    console.log(data.data);
     setReplyComments(0);
-    setComments(postComments);
+    setComments(data.data);
 
     setloading(false);
   };
-
-  // console.log({ replyComments });
 
   const handleLike = async (url) => {};
 
@@ -61,8 +66,8 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
 
       <div className="text-ascent-2">
         {showAll === post.id
-          ? post.description
-          : post.description.slice(0, 200)}
+          ? post?.description
+          : post?.description?.slice(0, 200)}
         {post.description.length > 200 &&
           (showAll === post.id ? (
             <span
@@ -101,7 +106,6 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
             )}
             {post?.likes?.length} likes
           </p>
-
           {/* Comments */}
           <p
             className="flex items-center gap-2 text-base cursor-pointer"
@@ -113,7 +117,6 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
             <BiComment size={20} />
             {post?.likes?.length} Comments
           </p>
-
           {/* Delete */}
           {user._id === post.userId._id && (
             <div
@@ -124,6 +127,13 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
               <span>Delete</span>
             </div>
           )}
+          {/* <div
+            className="flex items-center gap-1 text-base cursor-pointer text-ascent-1"
+            onClick={() => deletePost(post._id)}
+          >
+            <MdOutlineDeleteOutline size={20} />
+            <span>Delete</span>
+          </div> */}
         </div>
       </div>
 
@@ -131,16 +141,15 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
       {showComments && (
         <div className="w-full mt-4 border-t">
           <CommentForm
+            key={post._id}
             user={user}
-            id={post.id}
-            getComments={() => getComments(post.id)}
+            id={post._id}
+            getComments={() => getComments(post._id)}
           />
         </div>
       )}
 
-      {loading ? (
-        <Loading />
-      ) : comments.length > 0 ? (
+      {comments.length > 0 ? (
         comments.map((comment, index) => (
           <div className="w-full py-2" key={comment._id}>
             <div className="flex items-center gap-3 mb-2">
@@ -165,17 +174,14 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
             <div className="ml-12">
               <p className="text-ascent-2">{comment.comment}</p>
               <div className="flex gap-6 mt-2">
-                <p className="flex items-center gap-2 text-base cursor-pointer">
-                  {comment?.likes?.includes(user?._id) || commentLikes ? (
-                    <BiLike size={20} onClick={() => setCommentlikes(false)} />
+                <p
+                  className="flex items-center gap-2 text-base cursor-pointer"
+                  onClick={() => handleLike("/posts/likes")}
+                >
+                  {comment?.likes?.includes(user?._id) ? (
+                    <BiSolidLike size={20} color="blue" />
                   ) : (
-                    <BiSolidLike
-                      size={20}
-                      color="blue"
-                      onClick={() => {
-                        setCommentlikes(true);
-                      }}
-                    />
+                    <BiLike size={20} />
                   )}
                   {comment?.likes?.length} likes
                 </p>
@@ -187,22 +193,23 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
                 </span>
               </div>
               {replyComments === comment._id && (
-                <CommentForm
+                <ReplyForm
                   user={user}
-                  id={post.id}
+                  id={comment._id}
                   replyAt={comment.userId}
-                  getComments={() => getComments(post.id)}
+                  getComments={() => getComments(post._id)}
                 />
               )}
             </div>
 
+            {/* Problem */}
             <div className="px-8 py-2 mt-6">
               {comment.replies.length > 0 && (
                 <p
                   className="text-base cursor-pointer text-ascent-1"
                   onClick={() => {
                     setShowReply(
-                      showReply === comment.replies._id
+                      showReply === comment.replies[index]._id
                         ? 0
                         : comment.replies[index]._id
                     );
@@ -211,7 +218,7 @@ const PostCard = ({ post, user, deleteUser, likePost, deletePost }) => {
                   Show Replies {comment.replies.length}
                 </p>
               )}
-              {showReply === comment.replies._id &&
+              {showReply === comment.replies[index]._id &&
                 comment.replies.map((reply) => (
                   <ReplyCard
                     reply={reply}

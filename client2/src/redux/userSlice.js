@@ -27,6 +27,7 @@ const userSlice = createSlice({
 export default userSlice.reducer;
 
 export function Userlogin(user) {
+  console.log("userUserSlice.....", user);
   return function (dispatch) {
     dispatch(userSlice.actions.login(user));
   };

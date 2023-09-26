@@ -5,20 +5,35 @@ import TextInput from "./TextInput";
 import Loading from "./Loading";
 import CustomButton from "./CustomButton";
 import NoProfile from "../assets/userprofile.png";
+import { axiosInstance } from "../services/api-client";
 
-const CommentForm = ({ user, replyAt, getComments }) => {
+const CommentForm = ({ user, replyAt, getComments, id }) => {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
-  console.log({ replyAt });
+  // console.log({ replyAt });
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     mode: "onChange",
   });
 
-  const onSubmit = async (data) => {};
+  const onSubmit = async (data) => {
+    const newData = {
+      ...data,
+      from: user.firstName,
+    };
+    // console.log(newData, "newData");
+    // console.log(`/posts/comment/${id}`, newData);
+    setLoading(true);
+    const res = await axiosInstance.post(`/posts/comment/${id}`, newData);
+    // console.log(res.data, "creating posts");
+    setLoading(false);
+    getComments();
+    reset();
+  };
 
   return (
     <form

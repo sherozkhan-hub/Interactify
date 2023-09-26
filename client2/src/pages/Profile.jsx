@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
@@ -7,15 +7,28 @@ import FriendsCard from "../components/FriendsCard";
 import Loading from "../components/Loading";
 import PostCard from "../components/PostCard";
 import { posts } from "../assets/data";
+import { axiosInstance } from "../services/api-client";
+import { setPosts } from "../redux/postSlice";
 
 const Profile = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const { user } = useSelector((state) => state.user);
-  // const { posts } = useSelector((state) => state.posts);
+  const { posts } = useSelector((state) => state.posts);
   const [userInfo, setUserInfo] = useState(user);
-  console.log(posts);
+  // console.log(posts);
+
+  const fetchPost = async () => {
+    const res = await axiosInstance.get("/posts/get-user-post/" + id);
+    // console.log("profilecheck", res);
+    dispatch(setPosts(res.data.data));
+    // console.log(res.data.data, "Posts fetch");
+  };
+
+  useEffect(() => {
+    fetchPost();
+  }, []);
 
   const handleDelete = (id) => {};
 
