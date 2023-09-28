@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { MdClose } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import TextInput from "./TextInput";
-import CustomButton from "./CustomButton";
-import Loading from "./Loading";
 import { UpdateProfile, Userlogin } from "../redux/userSlice";
 import { handleFileUpload } from "../utils";
 import { axiosInstance } from "../services/api-client";
+import Loading from "./Loading";
 
 const EditProfile = () => {
   const { user } = useSelector((state) => state.user);
@@ -17,44 +15,55 @@ const EditProfile = () => {
   const [picture, setPicture] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log(user, "user response");
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm({
     mode: "onChange",
-    defaultValues: { ...user },
+    defaultValues: {
+      firstName: user.userFound?.firstName,
+      lastName: user.userFound?.lastName,
+      location: user.userFound?.location,
+    },
   });
 
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
-
     try {
-      const uri = picture && (await handleFileUpload(picture));
+      setIsSubmitting(true);
+      // console.log(picture, "checking picture");
+      const pictureUrl = picture && (await handleFileUpload(picture));
 
-      const { firstName, lastName, location, profession } = data;
-
-      const res = axiosInstance.put(`users/update-user/${user._id}`, {
-        firstName,
-        lastName,
-        location,
-        profession,
-        picture: uri ? uri : user.picture,
+      // console.log(pictureUrl, "picturing");
+      // console.log(data, "data checking");
+      // Update the user profile
+      const res = await axiosInstance.put(`users/update-user`, {
+        ...data,
+        profileUrl: pictureUrl ? pictureUrl : user.userFound.profileUrl,
       });
 
-      if (res) {
-        const newUser = { token: res.token, ...res.user };
+      // console.log(res, "res");
+      // console.log(user.token, "token");
+      if (res.status) {
+        const newUser = {
+          ...res.data,
+          token: user.token,
+          userFound: res.data.user,
+        };
+
+        console.log(newUser, "newUser");
 
         dispatch(Userlogin(newUser));
 
         setTimeout(() => {
           dispatch(UpdateProfile(false));
-        }, 3000);
+        }, 2000);
       }
-
       setIsSubmitting(false);
     } catch (error) {
       console.log(error);
+      setIsSubmitting(false);
     }
   };
 
@@ -63,108 +72,147 @@ const EditProfile = () => {
   };
 
   return (
-    <>
-      <div className="fixed z-50 inset-0 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <div className="fixed inset-0 transition-opacity">
-            <div className="absolute inset-0 bg-[#000] opacity-75"></div>
-          </div>
-          <span className="hidden sm:inline-block sm:align-middle sm:h-screen"></span>
-          &#8203;
-          <div
-            className="inline-block align-bottom bg-[#385170] text-left 
-          overflow-hidden shadow-xl transform rounded-lg transition-all sm:my-8 
-          sm:align-middle sm:max-w-lg sm:w-full"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-headline"
-          >
-            <div className="flex bg-blue justify-between px-6 pt-5 pb-2">
-              <label className="text-2xl font-medium text-ascent-1 text-left">
-                Edit Profile
-              </label>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Your modal content here */}
+      {/* ... */}
+      <div
+        className="inline-block align-bottom bg-[#385170] text-left
+      overflow-hidden shadow-xl transform rounded-lg w-[]  transition-all sm:my-8
+      sm:align-middle sm:max-w-lg sm:w-full"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-headline"
+      >
+        <div className="flex justify-between px-6 pt-5 pb-2 bg-blue">
+          <label className="text-2xl font-medium text-left text-ascent-1">
+            Edit Profile
+          </label>
 
-              <button className="text-ascent-1" onClick={handleClose}>
-                <MdClose size={22} />
-              </button>
-            </div>
-
-            <form
-              className="px-4 sm:px- flex flex-col gap-3 2xl:gap-6 bg-ascent-1"
-              onSubmit={handleSubmit(onSubmit)}
-            >
-              <TextInput
-                placeholder="Enter your First Name?"
-                styles="w-full rounded-full py-5"
-                name="firstName"
-                register={register("firstName", {
-                  required: "First Name is required",
-                })}
-                error={errors?.description ? errors?.description.message : ""}
-              />
-              <TextInput
-                placeholder="Enter your Last Name?"
-                styles="w-full rounded-full py-5"
-                name="lastName"
-                register={register("lastName", {
-                  required: "Last Name is required",
-                })}
-                error={errors?.description ? errors?.description.message : ""}
-              />
-              <TextInput
-                placeholder="Address is Required?"
-                styles="w-full rounded-full py-5"
-                name="address"
-                register={register("address", {
-                  required: "Address is Required",
-                })}
-                error={errors?.description ? errors?.description.message : ""}
-              />
-              <label
-                htmlFor="file"
-                className="flex items-center gap-2 text-ascent-2 hover:text-ascent-1 cursor-pointer"
-              >
-                <input
-                  type="file"
-                  onChange={(e) => setPicture(e.target.files[0])}
-                  id="imgUpload"
-                  data-max-size="5120"
-                  accept=".jpg .png .jpeg"
-                  className="hidden"
-                />
-                No file Chosen
-              </label>
-
-              {errMsg?.message && (
-                <span
-                  role="alert"
-                  className={`text-sm ${
-                    errMsg?.status === "failed"
-                      ? "text-red-500"
-                      : "text-green-500"
-                  } mt-0.5`}
-                >
-                  {errMsg?.message}
-                </span>
-              )}
-
-              <div className="py- sm:flex sm:flex-row-reverse border-t border-[#66666645]">
-                {isSubmitting ? (
-                  <Loading />
-                ) : (
-                  <CustomButton
-                    type={"submit"}
-                    containerStyles="inline-flex justify-center rounded-md 
-                  bg-blue px-8 py-3 text-sm font-medium text-white outline-none"
-                    title="Submit"
-                  />
-                )}
-              </div>
-            </form>
-          </div>
+          <button className="text-ascent-1" onClick={handleClose}>
+            <MdClose size={22} />
+          </button>
         </div>
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col gap-3 px-10 py-10 sm:px-2xl:gap-6 bg-ascent-1"
+          encType="multipart/form-data"
+        >
+          <div>
+            <label className="text-lg font-semibold">First Name</label>
+            <Controller
+              name="firstName"
+              control={control}
+              defaultValue={user?.firstName}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Enter your First Name"
+                  className="w-full rounded-lg py-5"
+                />
+              )}
+            />
+            {errors.firstName && (
+              <span className="text-red-500">{errors.firstName.message}</span>
+            )}
+          </div>
+          <div>
+            <label className="text-lg font-semibold">First Name</label>
+            <Controller
+              name="lastName"
+              control={control}
+              defaultValue={user?.lastName}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Enter your First Name"
+                  className="w-full rounded-lg py-5"
+                />
+              )}
+            />
+            {errors.lastName && (
+              <span className="text-red-500">{errors.lastName.message}</span>
+            )}
+          </div>
+          <div>
+            <label className="text-lg font-semibold">First Name</label>
+            <Controller
+              name="location"
+              control={control}
+              defaultValue={user?.location}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Enter your First Name"
+                  className="w-full rounded-lg py-5"
+                />
+              )}
+            />
+            {errors.location && (
+              <span className="text-red-500">{errors.location.message}</span>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="imageUpload"
+              className="flex items-center gap-2 cursor-pointer pl-4 mt-[2rem] text-ascent-2 hover:text-ascent-1"
+            >
+              <input
+                type="file"
+                onChange={(e) => setPicture(e.target.files[0])}
+                id="imageUpload"
+                accept=".jpg, .jpeg, .png"
+              />
+            </label>
+          </div>
+
+          {/* <label
+            htmlFor="imageUpload"
+            className="flex items-center gap-2 cursor-pointer text-ascent-2 hover:text-ascent-1"
+          >
+            <input
+              type="file"
+              onChange={(e) => console.log(e.target, "consoling")}
+              // id="imageUpload"
+              data-max-size="51200"
+              accept=".jpg, .jpeg, .png"
+              className="hidden"
+            />
+            <BiImages />
+            <span>Image</span>
+          </label> */}
+
+          {errMsg && (
+            <span
+              role="alert"
+              className={`text-sm ${
+                errMsg.status === "failed" ? "text-red-500" : "text-green-500"
+              } mt-0.5`}
+            >
+              {errMsg.message}
+            </span>
+          )}
+
+          <div className="py- sm:flex sm:flex-row-reverse border-t border-[#66666645]">
+            {isSubmitting ? (
+              <Loading />
+            ) : (
+              <button
+                type="submit"
+                className="inline-flex justify-center rounded-md
+              bg-blue px-8 py-3 text-sm font-medium text-white outline-none mt-[2rem]"
+              >
+                Submit
+              </button>
+            )}
+          </div>
+        </form>
       </div>
-    </>
+    </div>
   );
 };
 

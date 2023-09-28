@@ -7,6 +7,8 @@ import { IoMdNotificationsOutline } from "react-icons/io";
 import TextInput from "./TextInput";
 import CustomButton from "./CustomButton";
 import { Userlogout } from "../redux/userSlice";
+import { axiosInstance } from "../services/api-client";
+import { setPosts } from "../redux/postSlice";
 
 const TopBar = () => {
   const { user } = useSelector((state) => state.user);
@@ -24,17 +26,17 @@ const TopBar = () => {
     dispatch(setTheme(themeValue));
   };
 
-  const handleSearch = (data) => {
-    console.log(data);
+  const handleSearch = async (data) => {
+    const res = await axiosInstance.post("/posts", data);
+    // console.log(res.data.data, "data");
+    dispatch(setPosts(res.data.data));
   };
   return (
     <div className="topbar w-full flex items-center justify-between md:py-6 px-4 py-3 bg-primary">
       <Link to="/" className="flex gap-2 items-center">
-        <div className="p-1 md:p-2 bg- [#065ad8] rounded text-[lightGray]">
-          Fixinggggg
-        </div>
-        <span className="text-x1 md:text-2x1 text-[#065ad8] font-semibold">
-          SOCIAL
+        <div className="p-1 md:p-2 bg- [#065ad8] rounded text-[lightGray]"></div>
+        <span className="text-[1rem] md:text-2x1 text-[#065ad8] font-semibold">
+          Interactify
         </span>
       </Link>
 

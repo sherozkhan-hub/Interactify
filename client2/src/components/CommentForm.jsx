@@ -25,8 +25,6 @@ const CommentForm = ({ user, replyAt, getComments, id }) => {
       ...data,
       from: user.firstName,
     };
-    // console.log(newData, "newData");
-    // console.log(`/posts/comment/${id}`, newData);
     setLoading(true);
     const res = await axiosInstance.post(`/posts/comment/${id}`, newData);
     // console.log(res.data, "creating posts");

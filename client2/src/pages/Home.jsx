@@ -4,10 +4,10 @@ import ProfileCard from "../components/ProfileCard";
 import FriendsCard from "../components/FriendsCard";
 import Loading from "../components/Loading";
 import PostCard from "../components/PostCard";
-import { requests, friends } from "../assets/data.js";
+
 import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
-import { suggest } from "../assets/data.js";
+
 import NoProfile from "../assets/userprofile.png";
 import CustomButton from "../components/CustomButton";
 import { BsFiletypeGif, BsPersonFillAdd } from "react-icons/bs";
@@ -26,58 +26,67 @@ import {
   setValue,
 } from "../redux/postSlice";
 import { handleFileUpload } from "../utils/index.js";
+import { Userlogin } from "../redux/userSlice";
 
 const Home = () => {
   const { user, edit } = useSelector((state) => state.user);
 
-  const [friendRequest, setFriendRequest] = useState(requests);
-  const [suggestedFriend, setSuggestedFriend] = useState(suggest);
+  const [friendRequest, setFriendRequest] = useState([]);
+  const [suggestedFriend, setSuggestedFriend] = useState([]);
   const [errMsg, setErrMsg] = useState("");
-  const [file, setFile] = useState("");
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
-  const userHome = user.userFound;
+  const [userHome, setUserHome] = useState({});
+  // const userHome = user.userFound;
   // redux
   const dispatch = useDispatch();
   const { acceptButton, posts } = useSelector((state) => state.posts);
-  // console.log(posts, "homeposts");
-
-  // console.log(Array.isArray(posts), "posts check");
-  // react-hook-form
-  const { register, handleSubmit, formState } = useForm();
+  const { register, handleSubmit, reset, formState } = useForm();
   const { errors } = formState;
+  // console.log(user, "chhhh");
 
   const fetchPost = async () => {
     const { data } = await axiosInstance.get("/posts");
-    // console.log("resHowm", res);
     dispatch(setPosts(data.data));
-    // console.log(res.data.data, "Posts fetch");
+  };
+
+  const getUser = async () => {
+    try {
+      // const id = id || user.userFound._id;
+      const res = await axiosInstance.get(
+        "/users/get-user/" + user.userFound._id
+      );
+      // console.log(, "user home info userss");
+      // const newData = { ...res.data.data };
+      // console.log(newData, "user home info");
+      dispatch(setUserHome(res.data.data));
+    } catch (error) {
+      setErrMsg(error);
+    }
   };
 
   useEffect(() => {
-    // const fetchPost = async () => {
-    //   const res = await axiosInstance.get("/posts");
-    //   dispatch(setPosts(res.data.data));
-    //   console.log(res.data.data, "Posts fetch");
-    //   console.log(posts, "Posts");
-    // };
-    // getUser();
+    getUser();
     fetchPost();
-    // fetchFriendRequest();
-    // fetchSuggestedFriend();
+    fetchFriendRequest();
+    fetchSuggestedFriend();
     // setLoading(false);
   }, []);
 
   const handlePostSubmit = async (data) => {
     setPosting(true);
     try {
+      // console.log("file", file);
+      // console.log("hammad", await handleFileUpload(file));
       const uri = file && (await handleFileUpload(file));
       // console.log(uri, "URI");
-      console.log("filehowm", file);
+      // console.log("filehowm", typeof file);
       const newData = uri ? { ...data, image: uri } : data;
 
       const res = await axiosInstance.post("/posts/create-post", newData);
-      // console.log(res.data, "Post created");
+      console.log(res.data, "Post created");
+      dispatch(setPosts([res.data.data, ...posts]));
       setPosting(false);
 
       if (!res) {
@@ -86,6 +95,7 @@ const Home = () => {
       }
 
       setFile(null);
+      reset();
       await fetchPost();
       setPosting(false);
     } catch (error) {
@@ -97,33 +107,65 @@ const Home = () => {
 
   const deletePost = async (id) => {
     try {
-      console.log("HomePost id...", id);
+      // console.log("HomePost id...", id);
       const newPosts = posts.filter((post) => post._id !== id);
       dispatch(setPosts(newPosts));
       axiosInstance.delete(`/posts/${id}`).then((res) => {
-        console.log(res.data);
+        // console.log(res.data);
       });
     } catch (error) {
       setErrMsg(error);
     }
   };
 
-  // const umarFunc = (id) => {
-  //   const newarr = friendRequest.filter((fil) => fil._id === id);
-
-  //   // console.log(newarr[0]._id)
-
-  //   dispatch(setButtonValue(newarr[0]._id));
-  // };
-
-  const handleLikePost = async (url) => {
-    await axiosInstance.post(url);
+  const handleLikePost = async () => {};
+  const fetchFriendRequest = async () => {
+    try {
+      const { data } = await axiosInstance.get("/users/get-friend-request");
+      // console.log(data.data, "friend request");
+      setFriendRequest(data.data);
+    } catch (error) {
+      setErrMsg(error);
+    }
   };
-  const fetchFriendRequest = async () => {};
-  const fetchSuggestedFriend = async () => {};
-  const handleFriendRequest = async (id) => {};
-  const acceptFriendRequest = async (id) => {};
-  const getUser = async () => {};
+  const fetchSuggestedFriend = async () => {
+    try {
+      const res = await axiosInstance.post("/users/suggested-friends", {
+        userId: user.userFound._id,
+      });
+      // console.log(res.data.data, "suggested");
+      setSuggestedFriend(res.data.data);
+    } catch (error) {
+      setErrMsg(error);
+    }
+  };
+
+  // sending request
+  const handleFriendRequest = async (id) => {
+    try {
+      const res = await axiosInstance.post("/users/friend-request", {
+        requestTo: id,
+      });
+      console.log(res.data, "sending friend request");
+      await fetchSuggestedFriend();
+    } catch (error) {
+      setErrMsg(error);
+    }
+  };
+
+  // accept request
+  const acceptFriendRequest = async (id, status) => {
+    try {
+      const res = await axiosInstance.post("/users/accept-request", {
+        rid: id,
+        status,
+      });
+      console.log(res.data, "sending friend request");
+      // fetchSuggestedFriend();
+    } catch (error) {
+      setErrMsg(error);
+    }
+  };
 
   return (
     <>
@@ -136,8 +178,8 @@ const Home = () => {
             className="hidden w-1/3 lg:w-1/4 h-full md:flex flex-col gap-6
           overflow-y-auto border-r border-[#66666645]"
           >
-            <ProfileCard user={user} />
-            <FriendsCard friends={user?.friends} />
+            <ProfileCard user={userHome} />
+            <FriendsCard friends={userHome?.friends} />
           </div>
 
           {/* CENTER */}
@@ -176,15 +218,14 @@ const Home = () => {
                     type="file"
                     onChange={(e) => setFile(e.target.files[0])}
                     id="imageUpload"
-                    data-max-size="5120"
+                    data-max-size="51200"
                     accept=".jpg, .jpeg, .png"
                     className="hidden"
-                    {...register("imageUpload")}
                   />
                   <BiImages />
                   <span>Image</span>
                 </label>
-                {/* <label
+                <label
                   htmlFor="videoUpload"
                   className="flex items-center gap-2 cursor-pointer text-ascent-2 hover:text-ascent-1"
                 >
@@ -198,9 +239,9 @@ const Home = () => {
                   />
                   <BiSolidVideo />
                   <span>Video</span>
-                </label> */}
+                </label>
 
-                {/* <label
+                <label
                   htmlFor="imageUpload"
                   className="flex items-center gap-2 cursor-pointer text-ascent-2 hover:text-ascent-1"
                 >
@@ -215,7 +256,7 @@ const Home = () => {
                   />
                   <BiImages />
                   <span>Gif</span>
-                </label> */}
+                </label>
                 <div>
                   {posting ? (
                     <Loading />
@@ -231,21 +272,7 @@ const Home = () => {
                 </div>
               </div>
             </form>
-            {/* {posts.length > 0 ? (
-              posts.map((post) => (
-                <PostCard
-                  key={post._id}
-                  user={user}
-                  post={post}
-                  deletePost={deletePost}
-                  likePost={handleLikePost}
-                />
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center w-full gap-4 py-10">
-                <p className="text-lg text-ascent-2">No Posts available</p>
-              </div>
-            )} */}
+
             {posts &&
               posts.map((post) => {
                 return (
@@ -253,7 +280,7 @@ const Home = () => {
                     {/* <div> {post.description} </div> */}
                     <PostCard
                       key={post._id}
-                      user={userHome}
+                      user={user.userFound}
                       post={post}
                       deletePost={deletePost}
                       likePost={handleLikePost}
@@ -275,6 +302,7 @@ const Home = () => {
               </div>
             </div>
             {/* {/ FRIEND REQUEST */}
+            {/* {console.log(friendRequest, "friend request")} */}
             <div className="flex flex-col w-full gap-4 pt-4">
               {friendRequest?.map((from) => (
                 <div
@@ -286,43 +314,45 @@ const Home = () => {
                     className="flex items-center w-full gap-4 cursor-pointer"
                   >
                     <img
-                      src={from?.requestFrom.profileUrl || NoProfile}
-                      alt={from?.requestFrom.firstName}
+                      src={from?.requestFrom?.profileUrl || NoProfile}
+                      alt={from?.requestFrom?.firstName}
                       className="object-cover w-10 h-10 rounded-full"
                     />
                     <div className="flex-1">
                       <p className="text-base font-medium text-ascent-1">
-                        {from?.requestFrom.firstName}{" "}
-                        {from?.requestFrom.lastName}
+                        {from?.requestFrom?.firstName}{" "}
+                        {from?.requestFrom?.lastName}
                       </p>
                       <span className="text-sm text-ascent-2">
-                        {from?.requestFrom.profession ?? "No Profession"}
+                        {from?.requestFrom?.profession ?? "No Profession"}
                       </span>
                     </div>
                   </Link>
                   <div className="flex gap-1">
                     <CustomButton
                       title="Accept"
+                      onClick={() => {
+                        acceptFriendRequest(from._id, "Accepted");
+                        // console.log(from._id, "from id");
+                      }}
                       containerStyles="bg-[#0444a4] text-xs text-white px-1.5
                       py-1 rounded-full"
-                      onClick={() => {
-                        dispatch(setAcceptButton("Accept"));
-                        dispatch(setDisable(true));
-                        dispatch(setValue("Deny"));
-                        // umarFunc(from._id);
-                      }}
+                      // onClick={() => {
+                      //    umarFunc(from._id);
+                      // }}
                       friendrequest={friendRequest}
                       buttonID={from._id}
                     />
                     <CustomButton
                       title="Deny"
+                      onClick={() => acceptFriendRequest(from._id, "Deny")}
                       containerStyles="l border border-[#666] text-xs
                       text-ascent-1 px-1.5 py-1 rounded-full"
-                      onClick={() => {
-                        dispatch(setDenyButton("Deny"));
-                        dispatch(setDisable(true));
-                        dispatch(setValue("Accept"));
-                      }}
+                      // onClick={() => {
+                      //   dispatch(setDenyButton("Deny"));
+                      //   dispatch(setDisable(true));
+                      //   dispatch(setValue("Accept"));
+                      // }}
                     />
                   </div>
                 </div>
@@ -364,7 +394,9 @@ const Home = () => {
                       <div className="flex gap-1">
                         <button
                           className="bg-[#0444a430] text-sm text-white p-1 rounded"
-                          onClick={() => {}}
+                          onClick={() => {
+                            handleFriendRequest(friend._id);
+                          }}
                         >
                           <BsPersonFillAdd
                             size={20}

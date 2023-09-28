@@ -155,7 +155,7 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
             <div className="flex items-center gap-3 mb-2">
               <Link to={"/profile/" + comment?.userId?._id}>
                 <img
-                  src={comment.userId.profileUr1 || NoProfile}
+                  src={comment.userId?.profileUr1 || NoProfile}
                   alt={comment.userId.firstName}
                   className="object-cover rounded-full w-14 h-14"
                 />
@@ -215,10 +215,10 @@ const PostCard = ({ post, user, likePost, deletePost }) => {
                     );
                   }}
                 >
-                  Show Replies {comment.replies.length}
+                  Show Replies {comment?.replies[index]?.length}
                 </p>
               )}
-              {showReply === comment.replies[index]._id &&
+              {showReply === comment?.replies[index]?._id &&
                 comment.replies.map((reply) => (
                   <ReplyCard
                     reply={reply}

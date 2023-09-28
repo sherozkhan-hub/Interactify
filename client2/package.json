@@ -11,6 +11,8 @@
     "server": "json-server --watch db.json --port 8000"
   },
   "dependencies": {
+    "@cloudinary/react": "^1.11.2",
+    "@cloudinary/url-gen": "^1.11.2",
     "@hookform/resolvers": "^3.3.1",
     "@reduxjs/toolkit": "^1.9.5",
     "daisyui": "^3.7.7",

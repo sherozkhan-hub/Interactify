@@ -11,7 +11,8 @@ import moment from "moment/moment";
 
 const ProfileCard = ({ user }) => {
   const { user: data, edit } = useSelector((state) => state.user);
-  // console.log(data, "data");
+  // console.log("ProfileCarddata", data);
+  // console.log("ProfileCardUser", user);
   const dispatch = useDispatch();
   return (
     <div>
@@ -23,22 +24,18 @@ const ProfileCard = ({ user }) => {
           className="w-full flex flex-col items-center 
         justify-between border-b pb-5 border-[#66666645]"
         >
-          <Link to={"/profile/" + data.userFound._id} className="flex gap-2">
+          <Link to={"/profile/" + user._id} className="flex gap-2">
             <img
-              src={
-                user.userFound.profileUrl
-                  ? user.userFound.profileUrl
-                  : NoProfile
-              }
+              src={user.profileUrl ? user.profileUrl : NoProfile}
               alt={user?.email}
               className="rounded-full w-16 h-16 object-cover"
             />
           </Link>
           <div className="text-ascent-1">
-            {data.userFound.firstName} {data.userFound.lastName}
+            {user.firstName} {user.lastName}
           </div>
           <div>
-            {user?._id === data?._id ? (
+            {user?._id === data?.userFound._id ? (
               <LiaEditSolid
                 size={22}
                 className="text-blue cursor-pointer "

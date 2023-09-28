@@ -10,7 +10,7 @@ axiosInstance.interceptors.request.use(
     // const { user } = useSelector((state) => state.user); // Wrap this in a hook
     const user = JSON.parse(localStorage.getItem("user"));
 
-    if (user.token) {
+    if (user?.token) {
       config.headers.Authorization = `Bearer ${user.token}`; // Use template literals
       config.headers["Content-Type"] = "application/json";
       config.headers["Access-Control-Allow-Origin"] = "*";
